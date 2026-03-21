@@ -66,7 +66,13 @@ def save_to_db(city, temp, rain, wind):
 
 def generate_poem(weather_text):
 
-    client = Groq(api_key=os.environ["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"])
+    # Get API key from GitHub Secrets
+    api_key = os.getenv("GROQ_API_KEY")
+
+    if not api_key:
+        raise Exception("GROQ_API_KEY not found in environment variables")
+
+    client = Groq(api_key=api_key)
 
     prompt = f"""
 Compare tomorrow's weather in the following cities:
@@ -100,7 +106,7 @@ def create_html(poem, weather_text):
 
 <body>
 
-<h1>Weather Comparison</h1>
+<h1>Weather Comparison: Rajshahi vs Dhaka vs Aalborg</h1>
 
 <h2>Forecast Data</h2>
 <pre>
