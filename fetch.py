@@ -60,7 +60,7 @@ def save_to_db(city, temp, rain, wind):
 
 def generate_poem(weather_text):
 
-    client = Groq(api_key=os.environ["GROQ_API_KEY"])
+    client = Groq(api_key=os.environ["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"])
 
     prompt = f"""
 Compare tomorrow's weather in these cities:
