@@ -3,15 +3,12 @@ import sqlite3
 import os
 from groq import Groq
 
-# Coordinates of cities
+# Cities and coordinates
 locations = {
     "Rajshahi": (24.3745, 88.6042),
     "Dhaka": (23.8103, 90.4125),
     "Aalborg": (57.0488, 9.9217)
 }
-
-# Weather variables
-variables = "temperature_2m,precipitation,wind_speed_10m"
 
 API_URL = "https://api.open-meteo.com/v1/forecast"
 
@@ -21,12 +18,21 @@ def fetch_weather(city, lat, lon):
     params = {
         "latitude": lat,
         "longitude": lon,
-        "hourly": variables,
-        "forecast_days": 1
+        "hourly": [
+            "temperature_2m",
+            "precipitation",
+            "wind_speed_10m"
+        ],
+        "forecast_days": 1,
+        "timezone": "auto"
     }
 
     response = requests.get(API_URL, params=params)
     data = response.json()
+
+    if "hourly" not in data:
+        print(data)
+        raise Exception("Weather API returned unexpected data")
 
     temp = data["hourly"]["temperature_2m"][0]
     rain = data["hourly"]["precipitation"][0]
@@ -41,7 +47,7 @@ def save_to_db(city, temp, rain, wind):
     cursor = conn.cursor()
 
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS weather(
+        CREATE TABLE IF NOT EXISTS weather (
             city TEXT,
             temperature REAL,
             precipitation REAL,
@@ -63,15 +69,14 @@ def generate_poem(weather_text):
     client = Groq(api_key=os.environ["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"])
 
     prompt = f"""
-Compare tomorrow's weather in these cities:
+Compare tomorrow's weather in the following cities:
 
 {weather_text}
 
-Write a short poetic comparison.
-Describe the temperature, rain and wind.
+Write a short poetic comparison describing temperature, rain, and wind.
 Suggest which city would be the nicest place tomorrow.
 
-Write the poem in:
+Write the poem in two languages:
 1. English
 2. Bengali
 """
@@ -85,7 +90,7 @@ Write the poem in:
     return poem
 
 
-def create_html(poem):
+def create_html(poem, weather_text):
 
     html = f"""
 <html>
@@ -95,8 +100,14 @@ def create_html(poem):
 
 <body>
 
-<h1>Weather Comparison: Rajshahi vs Dhaka vs Aalborg</h1>
+<h1>Weather Comparison</h1>
 
+<h2>Forecast Data</h2>
+<pre>
+{weather_text}
+</pre>
+
+<h2>Generated Poem</h2>
 <pre>
 {poem}
 </pre>
@@ -123,7 +134,7 @@ def main():
 
     poem = generate_poem(weather_text)
 
-    create_html(poem)
+    create_html(poem, weather_text)
 
 
 if __name__ == "__main__":
